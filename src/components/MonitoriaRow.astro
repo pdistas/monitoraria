@@ -1,0 +1,17 @@
+---
+import type { Monitoria } from "../model/monitoria";
+
+interface Props {
+    monitoria: Monitoria;
+}
+
+const { monitoria } = Astro.props;
+---
+
+<tr>
+    <td>{monitoria.monitor.nome}</td>
+    <td>{monitoria.monitor.departamento}</td>
+    <td>{monitoria.conteudo}</td>
+    <td>{monitoria.data.toDateString()}</td>
+    <td>{monitoria.data.toTimeString()}</td>
+</tr>

@@ -1,0 +1,32 @@
+---
+import { get } from '../connection';
+
+const monitorias = await get("'Respostas ao formulário 1'!C2:M");
+---
+
+<table>
+    <tr>
+        <th>Monitor responsável</th>
+        <th>Data</th>
+        <th>Horário</th>
+        <th>Conteúdo</th>
+        <th>Aluno</th>
+        <th>RA</th>
+    </tr>
+    {
+        monitorias ?
+            monitorias.map((monitoria) => {
+                return (
+                    <tr>
+                        <td>{monitoria[0]}</td>
+                        <td>{monitoria[1]}</td>
+                        <td>{monitoria[2]}</td>
+                        <td>{monitoria[3]}</td>
+                        <td>{monitoria[4]}</td>
+                        <td>{monitoria[5]}</td>
+                    </tr>
+                );
+            }) :
+            <span>EMPTY</span>
+    }
+</table>
