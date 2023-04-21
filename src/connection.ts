@@ -9,8 +9,11 @@ const auth = await google.auth.getClient({ scopes: ['https://www.googleapis.com/
 const sheets = google.sheets({ version: 'v4', auth });
 
 export async function get(range: string) {
-    return (await sheets.spreadsheets.values.get({
+    const values = (await sheets.spreadsheets.values.get({
         spreadsheetId: env.SPREADSHEET_ID,
         range
     })).data.values || undefined;
+
+    console.log(values?.length);
+    return values;
 }

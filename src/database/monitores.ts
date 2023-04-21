@@ -1,6 +1,8 @@
+import type { Departamento } from "./departamentos";
+
 export type Monitor = {
     nome: string;
-    departamento: string;
+    departamento: Departamento;
     ra: number;
 }
 
