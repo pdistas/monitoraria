@@ -14,7 +14,7 @@ export const monitores: Monitor[] = [
     },
     {
         nome: "Ricardo",
-        departamento: "PD",
+        departamento: "Desenvolvimento de Sistemas",
         ra: 201605
     },
     {
@@ -24,7 +24,7 @@ export const monitores: Monitor[] = [
     },
     {
         nome: "Meida",
-        departamento: "PD",
+        departamento: "Desenvolvimento de Sistemas",
         ra: 201290
     }
 ]

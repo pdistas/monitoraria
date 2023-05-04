@@ -1,104 +1,77 @@
-import type { Monitor } from "../database/monitores";
+import { z } from "zod";
 import monitores from "../database/monitores";
+import departamentos from "../database/departamentos";
 
-export type Periodo = "diurno" | "noturno" | "CT";
 export type Curso = "Mecânica" | "Geodésia" | "Desenvolvimento de Sistemas" | "Edificações" | "Qualidade" | "Enfermagem";
 
-export type Turma = {
-    curso: Curso | null;
-    ano: 1 | 2 | 3 | 4 | null;
-    periodo: Periodo | null;
+const Periodos = ["diurno", "noturno", "ct"] as const;
+
+const periodoSchema = z.preprocess((x) => {
+    return Periodos.find((periodo) => periodo.toLowerCase().startsWith((x as string).toLowerCase()));
+}, z.enum(Periodos).optional());
+
+const cursoSchema = z.preprocess((x) => {
+    return departamentos.find((curso) => curso.toLowerCase().startsWith((x as string).toLowerCase()));
+}, z.enum(departamentos).optional());
+
+const toNumber = z.preprocess((x) => {
+    const val = parseInt((x as string).replace(/[^0-9]/g, "") ?? "");
+    return isNaN(val) ? null : val;
+}, z.number().int().optional().nullable());
+
+const turmaSchema = z.object({
+    curso: z.enum(departamentos).nullable().default(null),
+    ano: toNumber.nullable().default(null),
+    periodo: periodoSchema.nullable().default(null)
+});
+
+const alunoSchema = z.object({
+    nome: z.string().trim().nullable().default(null),
+    ra: toNumber.nullable().default(null),
+    turma: turmaSchema.nullable().default(null)
+});
+
+const monitoriaSchema = z.object({
+    monitor: turmaSchema.nullable().default(null),
+    conteudo: z.string().trim().nullable().default(null),
+    data: z.string().transform(dateParser).nullable().default(null),
+    aluno: alunoSchema.nullable().default(null),
+    isOnline: z.boolean().default(false).nullable().default(null),
+    modalidade: z.array(z.string().trim()).default([])
+});
+
+export type Monitoria = z.infer<typeof monitoriaSchema>;
+
+export function rowToMonitoria(row: string[]): Monitoria {
+    const monitoria = {
+        monitor: monitores.get(row[0]?.split("-")[0]?.trim() ?? "") ?? undefined,
+        conteudo: row[3],
+        data: row[1],
+        aluno: {
+            nome: row[4],
+            ra: row[8],
+            turma: {
+                curso: row[6],
+                ano: row[5],
+                periodo: row[7]?.trim().toLowerCase()
+            }
+        },
+        isOnline: row[9] === "Online",
+        modalidade: row[10]?.split(",") ?? []
+    };
+
+    return monitoriaSchema.parse(monitoria);
 }
 
-export type Aluno = {
-    nome: string | null;
-    ra: number | null;
-    turma: Turma | null;
-}
-
-export type MonitoriaDTO = {
-    monitor: Monitor | null;
-    conteudo: string | null;
-    data: Date | null;
-    aluno: Aluno | null;
-    isOnline: boolean | null;
-    modalidade?: string[];
-}
-
-export class Monitoria {
-    monitor: Monitor;
-    conteudo: string;
-    data: Date;
-    aluno: Aluno;
-    isOnline: boolean;
-    modalidade: string[];
-
-    constructor({ monitor, conteudo, data, aluno, isOnline, modalidade }: Monitoria) {
-        this.monitor = monitor;
-        this.conteudo = conteudo;
-        this.data = data;
-        this.aluno = aluno;
-        this.isOnline = isOnline;
-        this.modalidade = modalidade;
+function dateParser(dateToParse: string): Date {
+    if (new Date(dateToParse).toString() !== "Invalid Date") {
+        return new Date(dateToParse);
     }
 
-    static fromRow(row: string[]): MonitoriaDTO {
-        let monitorNome = row[0]?.split("-")[0]?.trim();
-        let monitor: Monitor | undefined = monitores.get(monitorNome ?? "");
+    const [date, time] = dateToParse.split(" ");
 
-        let date: Date = new Date(row[2] ? row[1] as string + " " + row[2] : row[1] as string);
-
-        if (date.toString() === "Invalid Date") {
-            let [day, time] = row[1] ? row[1].split(" ") : [];
-            time ??= row[2];
-            date = stringToDate(day ?? "", time ?? "");
-        }
-
-        let periodo: Periodo | undefined;
-        if (row[7]?.toLowerCase().includes("diurno")) {
-            periodo = "diurno";
-        } else if (row[7]?.toLowerCase().includes("noturno")) {
-            periodo = "noturno";
-        } else if (row[7]?.toLowerCase().includes("ct")) {
-            periodo = "CT";
-        } else {
-            periodo = undefined;
-        }
-
-        let isOnline: boolean | null = null;
-        if (row[9] && row[9].toLowerCase().trim() === "online") {
-            isOnline = true;
-        } else if (row[9] && row[9].toLowerCase().trim() === "presencial") {
-            isOnline = false;
-        }
-
-        let res = {
-            monitor: monitor ?? null,
-            data: date.toString() === "Invalid Date" ? null : date,
-            conteudo: row[3]?.trim() ?? null,
-            aluno: {
-                nome: row[4]?.trim() ?? "",
-                ra: row[8] ?? null,
-                turma: {
-                    ano: row[5]?.trim().charAt(0) ?? null,
-                    curso: row[6] ?? null,
-                    periodo: periodo ?? null
-                } as Turma
-            } as Aluno,
-            isOnline: isOnline,
-        } as MonitoriaDTO;
-
-        if (row[10]) {
-            res.modalidade = row[10].split(",").map(m => m.trim());
-        }
-
-        return res;
-    }
-}
-
-function stringToDate(date: string, time: string): Date {
-    const [day, month, year] = date.split("/");
-    const [hour, minute] = time.split(":");
+    const [day, month, year] = dateToParse.split("/");
+    const [hour, minute] = dateToParse.split(":");
 
     if (!day || !month || !year || !hour || !minute) {
         return new Date("Invalid Date");

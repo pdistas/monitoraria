@@ -1,11 +1,11 @@
 import type { APIRoute  } from 'astro';
 import { get } from '../../connection'
-import { Monitoria } from '../../model/monitoria';
+import { rowToMonitoria } from '../../model/monitoria';
 
 export const all: APIRoute = async() => {
     try {
         const res = await get("'Respostas ao formulário 1'!C2:M") as string[][];
-        const monitorias = res.map(row => Monitoria.fromRow(row));
+        const monitorias = res.map(rowToMonitoria);
 
         console.log(`Sending ${monitorias?.length} rows`);
         

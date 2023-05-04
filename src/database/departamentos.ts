@@ -4,7 +4,7 @@ const departamentos = [
     "Científicas",
     "Qualidade",
     "Enfermagem",
-    "PD",
+    "Desenvolvimento de Sistemas",
     "Mecânica",
     "Geodésia",
     "Edificações"
