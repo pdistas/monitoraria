@@ -6,42 +6,15 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum Curso {
-  DS
-  Geodesia
-  Mecanica
-  Qualidade
-  Enfermagem
-  Edificacoes
-}
-
-enum Departamento {
-  Exatas
-  Humanas
-  Cientificas
-  DS
-  Geodesia
-  Mecanica
-  Qualidade
-  Enfermagem
-  Edificacoes
-}
-
-enum Periodo {
-  Diurno
-  Noturno
-  CT
 }
 
 model Turma {
   code    String  @id
   ano     Int
-  periodo Periodo
-  curso   Curso
+  periodo String
+  curso   String
   alunos  Aluno[]
 
   @@unique([ano, periodo, curso])
@@ -60,8 +33,8 @@ model Aluno {
 
 model Monitor {
   id           String       @id @default(cuid())
-  nome         String
-  departamento Departamento
+  nome         String       @unique
+  departamento String
   monitorias   Monitoria[]
 
   @@index([nome, departamento])
