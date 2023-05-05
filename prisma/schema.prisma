@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Curso {
+  DS
+  Geodesia
+  Mecanica
+  Qualidade
+  Enfermagem
+  Edificacoes
+}
+
+enum Departamento {
+  Exatas
+  Humanas
+  Cientificas
+  DS
+  Geodesia
+  Mecanica
+  Qualidade
+  Enfermagem
+  Edificacoes
+}
+
+enum Periodo {
+  Diurno
+  Noturno
+  CT
+}
+
+model Turma {
+  code    String  @id
+  ano     Int
+  periodo Periodo
+  curso   Curso
+  alunos  Aluno[]
+
+  @@unique([ano, periodo, curso])
+}
+
+model Aluno {
+  id         String      @id @default(cuid())
+  nome       String
+  ra         Int         @unique
+  turma      Turma       @relation(fields: [turmaCode], references: [code])
+  turmaCode  String
+  monitorias Monitoria[]
+
+  @@index([nome, ra])
+}
+
+model Monitor {
+  id           String       @id @default(cuid())
+  nome         String
+  departamento Departamento
+  monitorias   Monitoria[]
+
+  @@index([nome, departamento])
+}
+
+model Monitoria {
+  id        Int      @id @default(autoincrement())
+  monitor   Monitor  @relation(fields: [monitorId], references: [id])
+  monitorId String
+  alunos    Aluno[]
+  online    Boolean
+  data      DateTime
+  conteudo  String
+  tags      Tag[]
+
+  @@unique([monitorId, data])
+}
+
+model Tag {
+  id        Int         @id @default(autoincrement())
+  info      String
+  monitoria Monitoria[]
+}
